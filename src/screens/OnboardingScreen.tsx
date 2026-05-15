@@ -1,6 +1,8 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React from 'react';
-import { Button, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+
+import { PrimaryButton } from '../components/PrimaryButton';
 import { RootStackParamList } from '../types/navigation';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Onboarding'>;
@@ -14,10 +16,12 @@ export function OnboardingScreen({ navigation }: Props) {
         浮いたお金で欲しいものを買えるようになるまでを可視化します。
       </Text>
 
-      <Button
+      <PrimaryButton
         title="はじめる"
-        onPress={() => navigation.replace('SmokingSettings')}
-      />
+            onPress={() =>
+        navigation.replace('SmokingSettings')
+        }
+        />
     </View>
   );
 }

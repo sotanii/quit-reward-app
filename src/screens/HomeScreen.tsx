@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import {
     Alert,
-    Button,
     FlatList,
     ScrollView,
     StyleSheet,
@@ -10,6 +9,8 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+
+import { PrimaryButton } from '../components/PrimaryButton';
 
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -163,25 +164,25 @@ export function HomeScreen({ navigation }: Props) {
           onChangeText={setCountInput}
         />
 
-        <Button
+        <PrimaryButton
           title="吸っちゃった"
           onPress={handleSlipSave}
         />
       </View>
 
       <View style={styles.actions}>
-        <Button
-          title="商品を追加"
-          onPress={() =>
+          <PrimaryButton
+            title="商品を追加"
+            onPress={() =>
             navigation.navigate('AddRewardItem')
-          }
-        />
+            }
+      />
 
-        <Button
-          title="設定"
-          onPress={() => navigation.navigate('Settings')}
-        />
-      </View>
+  <PrimaryButton
+    title="設定"
+    onPress={() => navigation.navigate('Settings')}
+  />
+</View>
 
       <Text style={styles.section}>欲しい商品</Text>
 
