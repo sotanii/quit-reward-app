@@ -50,3 +50,12 @@ export async function getSlipRecords(): Promise<SlipRecord[]> {
   const value = await AsyncStorage.getItem(KEYS.SLIP_RECORDS);
   return value ? JSON.parse(value) : [];
 }
+
+export async function resetAllData(): Promise<void> {
+  await AsyncStorage.multiSet([
+    [KEYS.ONBOARDED, JSON.stringify(false)],
+    [KEYS.SETTINGS, JSON.stringify(defaultSettings)],
+    [KEYS.REWARD_ITEMS, JSON.stringify([])],
+    [KEYS.SLIP_RECORDS, JSON.stringify([])],
+  ]);
+}

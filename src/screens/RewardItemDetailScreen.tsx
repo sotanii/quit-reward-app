@@ -1,99 +1,58 @@
-import React, { useEffect, useState } from 'react';
-import {
-    Button,
-    Linking,
-    StyleSheet,
-    Text,
-    View,
-} from 'react-native';
-
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-
-import { getSettings, getSlipRecords } from '../storage/storage';
+import React, { useEffect, useState } from 'react';
+import { Alert, Linking, StyleSheet, Text, View } from 'react-native';
+import { PrimaryButton } from '../components/PrimaryButton';
+import { getRewardItems, getSettings, getSlipRecords, saveRewardItems } from '../storage/storage';
 import { RootStackParamList } from '../types/navigation';
+import { formatYen, getNetSavedAmount, getRewardProgress } from '../utils/calculations';
 
-import {
-    formatYen,
-    getNetSavedAmount,
-    getRewardProgress,
-} from '../utils/calculations';
+type Props = NativeStackScreenProps<RootStackParamList, 'RewardItemDetail'>;
 
-type Props = NativeStackScreenProps<
-  RootStackParamList,
-  'RewardItemDetail'
->;
-
-export function RewardItemDetailScreen({ route }: Props) {
+export function RewardItemDetailScreen({ route, navigation }: Props) {
   const { item } = route.params;
-
   const [saved, setSaved] = useState(0);
 
   useEffect(() => {
     (async () => {
       const settings = await getSettings();
-
       const slips = await getSlipRecords();
-
-      const total = slips.reduce(
-        (sum, s) => sum + s.count,
-        0
-      );
-
+      const total = slips.reduce((sum, s) => sum + s.count, 0);
       setSaved(getNetSavedAmount(settings, total));
     })();
   }, []);
 
-  const progress = getRewardProgress(item, saved);
+  const onDelete = () => {
+    Alert.alert('確認', 'この商品を削除しますか？', [
+      { text: 'キャンセル', style: 'cancel' },
+      {
+        text: '削除',
+        style: 'destructive',
+        onPress: async () => {
+          const items = await getRewardItems();
+          const next = items.filter((x) => x.id !== item.id);
+          await saveRewardItems(next);
+          navigation.navigate('Home');
+        },
+      },
+    ]);
+  };
 
+  const progress = getRewardProgress(item, saved);
   return (
     <View style={styles.container}>
-      <Text style={styles.name}>{item.name}</Text>
-
-      <Text style={styles.row}>
-        価格: {formatYen(item.price)}
-      </Text>
-
-      <Text style={styles.row}>
-        達成率: {progress.progress}%
-      </Text>
-
-      <Text style={styles.row}>
-        {progress.isAchieved
-          ? '🎉 購入可能です'
-          : `あと ${formatYen(progress.remaining)}`}
-      </Text>
-
-      <Text style={styles.row}>
-        URL: {item.url}
-      </Text>
-
-      <Text style={styles.row}>
-        メモ: {item.memo || '-'}
-      </Text>
-
-      <Button
-        title="Amazonで見る"
-        onPress={() => Linking.openURL(item.url)}
-      />
+      <View style={styles.card}>
+        <Text style={styles.name}>{item.name}</Text>
+        <Text style={styles.price}>{formatYen(item.price)}</Text>
+        <Text style={styles.row}>達成率: {progress.progress}%</Text>
+        <Text style={styles.row}>{progress.isAchieved ? '🎉 購入可能です' : `あと ${formatYen(progress.remaining)}`}</Text>
+        <Text style={styles.row}>URL: {item.url}</Text>
+        <Text style={styles.row}>メモ: {item.memo || '-'}</Text>
+      </View>
+      <PrimaryButton title="Amazonで見る" onPress={() => Linking.openURL(item.url)} />
+      <View style={styles.space} />
+      <PrimaryButton title="この商品を削除" onPress={onDelete} />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    padding: 20,
-  },
-
-  name: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-
-  row: {
-    fontSize: 16,
-    marginBottom: 8,
-  },
-});
+const styles = StyleSheet.create({ container: { flex: 1, backgroundColor: '#F7F7F7', padding: 20 }, card: { backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 12 }, name: { fontSize: 28, fontWeight: '800', marginBottom: 8, color: '#111' }, price: { fontSize: 28, fontWeight: '800', marginBottom: 10 }, row: { fontSize: 16, marginBottom: 8, color: '#333' }, space: { height: 8 } });
