@@ -1,7 +1,7 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text } from 'react-native';
-import { v4 as uuidv4 } from 'uuid';
+import { generateId } from '../utils/id';
 
 import { LabeledInput } from '../components/LabeledInput';
 import { PrimaryButton } from '../components/PrimaryButton';
@@ -51,7 +51,7 @@ export function AddRewardItemScreen({ navigation }: Props) {
     const items = await getRewardItems();
 
     items.unshift({
-      id: uuidv4(),
+      id: generateId(),
       name: name.trim(),
       price: parsedPrice,
       url: url.trim(),

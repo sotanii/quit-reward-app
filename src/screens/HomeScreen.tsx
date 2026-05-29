@@ -1,8 +1,8 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { v4 as uuidv4 } from 'uuid';
+import { Alert, Keyboard, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { generateId } from '../utils/id';
 import { MotivationCard } from '../components/MotivationCard';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { RewardItemImage } from '../components/RewardItemImage';
@@ -122,13 +122,15 @@ export function HomeScreen({ navigation }: Props) {
   }, [settings, stats, slips, items]);
 
   const handleSlipSave = async () => {
+    Keyboard.dismiss();
+
     const n = Number(countInput);
     if (!Number.isInteger(n) || n <= 0) {
       Alert.alert('入力エラー', '吸った本数は1以上の整数を入力してください。');
       return;
     }
 
-    const newRecord: SlipRecord = { id: uuidv4(), smokedAt: new Date().toISOString(), count: n };
+    const newRecord: SlipRecord = { id: generateId(), smokedAt: new Date().toISOString(), count: n };
     const next = [newRecord, ...slips];
     await saveSlipRecords(next);
     setSlips(next);
@@ -137,6 +139,8 @@ export function HomeScreen({ navigation }: Props) {
   };
 
   const handleUndoLastSlip = async () => {
+    Keyboard.dismiss();
+
     if (slips.length === 0) {
       Alert.alert('お知らせ', '取り消せる記録がありません');
       return;
@@ -158,7 +162,12 @@ export function HomeScreen({ navigation }: Props) {
   const { quitDays, daily, originalSaved, totalSlipCount, netSaved, savedTime, closestItem } = stats;
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="always"
+      keyboardDismissMode="on-drag"
+    >
       <Text style={styles.title}>ホーム</Text>
 
       <MotivationCard message={motivationMessage} />
@@ -178,7 +187,15 @@ export function HomeScreen({ navigation }: Props) {
 
       <View style={styles.card}>
         <Text style={styles.section}>吸っちゃった記録</Text>
-        <TextInput style={styles.input} keyboardType="numeric" value={countInput} onChangeText={setCountInput} />
+        <TextInput
+          style={styles.input}
+          keyboardType="number-pad"
+          value={countInput}
+          onChangeText={setCountInput}
+          returnKeyType="done"
+          blurOnSubmit
+          onSubmitEditing={handleSlipSave}
+        />
         <PrimaryButton title="吸っちゃった" onPress={handleSlipSave} />
         <View style={styles.space} />
         <PrimaryButton title="直近の記録を取り消す" onPress={handleUndoLastSlip} />

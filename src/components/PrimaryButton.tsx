@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 
 type Props = {
   title: string;
@@ -9,9 +9,14 @@ type Props = {
 
 export function PrimaryButton({ title, onPress, disabled }: Props) {
   return (
-    <Pressable style={[styles.button, disabled && styles.disabled]} onPress={onPress} disabled={disabled}>
+    <TouchableOpacity
+      style={[styles.button, disabled && styles.disabled]}
+      onPress={onPress}
+      disabled={disabled}
+      activeOpacity={0.8}
+    >
       <Text style={styles.text}>{title}</Text>
-    </Pressable>
+    </TouchableOpacity>
   );
 }
 
@@ -20,6 +25,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2E6BFF',
     borderRadius: 10,
     minHeight: 48,
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 16,
