@@ -1,5 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { AddRewardItemScreen } from '../screens/AddRewardItemScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
@@ -21,7 +22,13 @@ export function RootNavigator() {
     })();
   }, []);
 
-  if (!initialRoute) return null;
+  if (!initialRoute) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color="#2E6BFF" />
+      </View>
+    );
+  }
 
   return (
     <Stack.Navigator initialRouteName={initialRoute}>
@@ -34,3 +41,12 @@ export function RootNavigator() {
     </Stack.Navigator>
   );
 }
+
+const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F7F7F7',
+  },
+});

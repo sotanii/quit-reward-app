@@ -9,11 +9,13 @@ const KEYS = {
 };
 
 export function createDefaultSettings(): SmokingSettings {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   return {
     packPrice: 600,
     daysPerPack: 1,
     minutesPerCigarette: 5,
-    quitStartDate: new Date().toISOString(),
+    quitStartDate: today.toISOString(),
   };
 }
 
@@ -30,47 +32,83 @@ function safeParse<T>(json: string | null, fallback: T): T {
 }
 
 export async function setOnboarded(value: boolean): Promise<void> {
-  await AsyncStorage.setItem(KEYS.ONBOARDED, JSON.stringify(value));
+  try {
+    await AsyncStorage.setItem(KEYS.ONBOARDED, JSON.stringify(value));
+  } catch {
+    // 保存失敗時もアプリを落とさない
+  }
 }
 
 export async function getOnboarded(): Promise<boolean> {
-  const value = await AsyncStorage.getItem(KEYS.ONBOARDED);
-  return safeParse(value, false);
+  try {
+    const value = await AsyncStorage.getItem(KEYS.ONBOARDED);
+    return safeParse(value, false);
+  } catch {
+    return false;
+  }
 }
 
 export async function saveSettings(settings: SmokingSettings): Promise<void> {
-  await AsyncStorage.setItem(KEYS.SETTINGS, JSON.stringify(settings));
+  try {
+    await AsyncStorage.setItem(KEYS.SETTINGS, JSON.stringify(settings));
+  } catch {
+    // 保存失敗時もアプリを落とさない
+  }
 }
 
 export async function getSettings(): Promise<SmokingSettings> {
-  const value = await AsyncStorage.getItem(KEYS.SETTINGS);
-  return safeParse(value, createDefaultSettings());
+  try {
+    const value = await AsyncStorage.getItem(KEYS.SETTINGS);
+    return safeParse(value, createDefaultSettings());
+  } catch {
+    return createDefaultSettings();
+  }
 }
 
 export async function saveRewardItems(items: RewardItem[]): Promise<void> {
-  await AsyncStorage.setItem(KEYS.REWARD_ITEMS, JSON.stringify(items));
+  try {
+    await AsyncStorage.setItem(KEYS.REWARD_ITEMS, JSON.stringify(items));
+  } catch {
+    // 保存失敗時もアプリを落とさない
+  }
 }
 
 export async function getRewardItems(): Promise<RewardItem[]> {
-  const value = await AsyncStorage.getItem(KEYS.REWARD_ITEMS);
-  return safeParse(value, []);
+  try {
+    const value = await AsyncStorage.getItem(KEYS.REWARD_ITEMS);
+    return safeParse(value, []);
+  } catch {
+    return [];
+  }
 }
 
 export async function saveSlipRecords(records: SlipRecord[]): Promise<void> {
-  await AsyncStorage.setItem(KEYS.SLIP_RECORDS, JSON.stringify(records));
+  try {
+    await AsyncStorage.setItem(KEYS.SLIP_RECORDS, JSON.stringify(records));
+  } catch {
+    // 保存失敗時もアプリを落とさない
+  }
 }
 
 export async function getSlipRecords(): Promise<SlipRecord[]> {
-  const value = await AsyncStorage.getItem(KEYS.SLIP_RECORDS);
-  return safeParse(value, []);
+  try {
+    const value = await AsyncStorage.getItem(KEYS.SLIP_RECORDS);
+    return safeParse(value, []);
+  } catch {
+    return [];
+  }
 }
 
 export async function resetAllData(): Promise<void> {
   const freshDefaults = createDefaultSettings();
-  await AsyncStorage.multiSet([
-    [KEYS.ONBOARDED, JSON.stringify(false)],
-    [KEYS.SETTINGS, JSON.stringify(freshDefaults)],
-    [KEYS.REWARD_ITEMS, JSON.stringify([])],
-    [KEYS.SLIP_RECORDS, JSON.stringify([])],
-  ]);
+  try {
+    await AsyncStorage.multiSet([
+      [KEYS.ONBOARDED, JSON.stringify(false)],
+      [KEYS.SETTINGS, JSON.stringify(freshDefaults)],
+      [KEYS.REWARD_ITEMS, JSON.stringify([])],
+      [KEYS.SLIP_RECORDS, JSON.stringify([])],
+    ]);
+  } catch {
+    // リセット失敗時もアプリを落とさない
+  }
 }

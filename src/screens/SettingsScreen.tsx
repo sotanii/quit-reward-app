@@ -5,7 +5,7 @@ import { LabeledInput } from '../components/LabeledInput';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { getSettings, resetAllData, saveSettings } from '../storage/storage';
 import { RootStackParamList } from '../types/navigation';
-import { isValidDateString } from '../utils/validation';
+import { isNotFutureDate, isValidDateString } from '../utils/validation';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
@@ -34,6 +34,7 @@ export function SettingsScreen({ navigation }: Props) {
     if (Number.isNaN(parsedDaysPerPack) || parsedDaysPerPack <= 0) return Alert.alert('入力エラー', '1箱を吸い切る日数は0より大きい値を入力してください。');
     if (Number.isNaN(parsedMinutes) || parsedMinutes <= 0) return Alert.alert('入力エラー', '1本あたりの喫煙時間は0より大きい値を入力してください。');
     if (!isValidDateString(quitStartDate)) return Alert.alert('入力エラー', '禁煙開始日は YYYY-MM-DD 形式の正しい日付を入力してください。');
+    if (!isNotFutureDate(quitStartDate)) return Alert.alert('入力エラー', '禁煙開始日は今日以前の日付を入力してください。');
 
     await saveSettings({ packPrice: parsedPackPrice, daysPerPack: parsedDaysPerPack, minutesPerCigarette: parsedMinutes, quitStartDate: new Date(`${quitStartDate}T00:00:00.000Z`).toISOString() });
     Alert.alert('保存しました', '設定を更新しました。');
@@ -54,7 +55,7 @@ export function SettingsScreen({ navigation }: Props) {
   };
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
       <Text style={styles.title}>設定</Text>
       <LabeledInput label="1箱の価格（円）" keyboardType="numeric" value={packPrice} onChangeText={setPackPrice} />
       <LabeledInput label="1箱を吸い切る日数" keyboardType="numeric" value={daysPerPack} onChangeText={setDaysPerPack} />

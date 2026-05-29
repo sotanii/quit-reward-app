@@ -40,6 +40,14 @@ export function AddRewardItemScreen({ navigation }: Props) {
       );
     }
 
+    const trimmedImageUrl = imageUrl.trim();
+    if (trimmedImageUrl && !isValidHttpUrl(trimmedImageUrl)) {
+      return Alert.alert(
+        '入力エラー',
+        '画像URLは http:// または https:// で始めてください。'
+      );
+    }
+
     const items = await getRewardItems();
 
     items.unshift({
@@ -47,7 +55,7 @@ export function AddRewardItemScreen({ navigation }: Props) {
       name: name.trim(),
       price: parsedPrice,
       url: url.trim(),
-      imageUrl: imageUrl.trim() || undefined,
+      imageUrl: trimmedImageUrl || undefined,
       memo: memo.trim() || undefined,
       createdAt: new Date().toISOString(),
     });
@@ -58,7 +66,7 @@ export function AddRewardItemScreen({ navigation }: Props) {
   };
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
       <Text style={styles.title}>商品を追加</Text>
 
       <LabeledInput label="商品名" value={name} onChangeText={setName} />

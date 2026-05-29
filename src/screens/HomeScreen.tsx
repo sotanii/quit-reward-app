@@ -1,16 +1,26 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, FlatList, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { v4 as uuidv4 } from 'uuid';
 import { MotivationCard } from '../components/MotivationCard';
 import { PrimaryButton } from '../components/PrimaryButton';
+import { RewardItemImage } from '../components/RewardItemImage';
 import { RewardMeter } from '../components/RewardMeter';
 import { StatCard } from '../components/StatCard';
 import { getRewardItems, getSettings, getSlipRecords, saveSlipRecords } from '../storage/storage';
 import { RewardItem, SlipRecord, SmokingSettings } from '../types';
 import { RootStackParamList } from '../types/navigation';
-import { formatYen, getDailySmokingCost, getNetSavedAmount, getOriginalSavedAmount, getQuitDays, getRewardProgress, getSavedTimeMinutes } from '../utils/calculations';
+import {
+  formatYen,
+  getDailySmokingCost,
+  getNetSavedAmount,
+  getOriginalSavedAmount,
+  getPacksRemaining,
+  getQuitDays,
+  getRewardProgress,
+  getSavedTimeMinutes,
+} from '../utils/calculations';
 import { generateMotivationMessage } from '../utils/messages';
 
 /** 未達成商品の中で最も達成に近い商品を返す */
@@ -19,6 +29,7 @@ function findClosestUnachievedItem(items: RewardItem[], netSaved: number): Rewar
   let minRemaining = Infinity;
 
   for (const item of items) {
+    if (item.price <= 0) continue;
     const remaining = item.price - netSaved;
     if (remaining > 0 && remaining < minRemaining) {
       minRemaining = remaining;
@@ -76,20 +87,39 @@ export function HomeScreen({ navigation }: Props) {
 
   const sortedItems = useMemo(() => sortItems(items, sortKey), [items, sortKey]);
 
-  if (!settings) return <View style={styles.container}><Text>読み込み中...</Text></View>;
+  const stats = useMemo(() => {
+    if (!settings) return null;
 
-  const quitDays = getQuitDays(settings.quitStartDate);
-  const daily = getDailySmokingCost(settings);
-  const originalSaved = getOriginalSavedAmount(settings);
-  const totalSlipCount = slips.reduce((sum, s) => sum + s.count, 0);
-  const netSaved = getNetSavedAmount(settings, totalSlipCount);
-  const savedTime = getSavedTimeMinutes(settings);
+    const quitDays = getQuitDays(settings.quitStartDate);
+    const daily = getDailySmokingCost(settings);
+    const originalSaved = getOriginalSavedAmount(settings);
+    const totalSlipCount = slips.reduce((sum, s) => sum + s.count, 0);
+    const netSaved = getNetSavedAmount(settings, totalSlipCount);
+    const savedTime = getSavedTimeMinutes(settings);
+    const closestItem = daily > 0 ? findClosestUnachievedItem(items, netSaved) : null;
 
-  // 起動時メッセージ（同日中は同じメッセージ）
-  const motivationMessage = useMemo(
-    () => generateMotivationMessage({ settings, netSaved, dailySaving: daily, quitDays, slips, items }),
-    [settings, netSaved, daily, quitDays, slips, items]
-  );
+    return {
+      quitDays,
+      daily,
+      originalSaved,
+      totalSlipCount,
+      netSaved,
+      savedTime,
+      closestItem,
+    };
+  }, [settings, slips, items]);
+
+  const motivationMessage = useMemo(() => {
+    if (!settings || !stats) return '今日から少しずつ、欲しいものに近づいていきましょう 🌿';
+    return generateMotivationMessage({
+      settings,
+      netSaved: stats.netSaved,
+      dailySaving: stats.daily,
+      quitDays: stats.quitDays,
+      slips,
+      items,
+    });
+  }, [settings, stats, slips, items]);
 
   const handleSlipSave = async () => {
     const n = Number(countInput);
@@ -117,11 +147,20 @@ export function HomeScreen({ navigation }: Props) {
     Alert.alert('取り消しました', '直近の記録を取り消しました。');
   };
 
+  if (!settings || !stats) {
+    return (
+      <View style={styles.container}>
+        <Text>読み込み中...</Text>
+      </View>
+    );
+  }
+
+  const { quitDays, daily, originalSaved, totalSlipCount, netSaved, savedTime, closestItem } = stats;
+
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       <Text style={styles.title}>ホーム</Text>
 
-      {/* 起動時メッセージ */}
       <MotivationCard message={motivationMessage} />
       <StatCard label="禁煙日数" value={`${quitDays}日`} />
       <StatCard label="実質節約額" value={formatYen(netSaved)} />
@@ -130,17 +169,12 @@ export function HomeScreen({ navigation }: Props) {
       <StatCard label="1日あたりの節約額" value={formatYen(daily)} />
       <StatCard label="吸っちゃった累計本数" value={`${totalSlipCount}本`} />
 
-      {/* ごほうび到達メーター */}
-      {(() => {
-        const closestItem = findClosestUnachievedItem(items, netSaved);
-        if (!closestItem) return null;
-        return (
-          <>
-            <Text style={styles.meterTitle}>🎁 次のごほうび</Text>
-            <RewardMeter item={closestItem} netSaved={netSaved} dailySaving={daily} />
-          </>
-        );
-      })()}
+      {closestItem && (
+        <>
+          <Text style={styles.meterTitle}>🎁 次のごほうび</Text>
+          <RewardMeter item={closestItem} netSaved={netSaved} dailySaving={daily} />
+        </>
+      )}
 
       <View style={styles.card}>
         <Text style={styles.section}>吸っちゃった記録</Text>
@@ -157,7 +191,6 @@ export function HomeScreen({ navigation }: Props) {
 
       <Text style={styles.section}>欲しい商品</Text>
 
-      {/* ソートボタン */}
       <View style={styles.sortRow}>
         {SORT_OPTIONS.map((opt) => (
           <TouchableOpacity
@@ -172,23 +205,35 @@ export function HomeScreen({ navigation }: Props) {
         ))}
       </View>
 
-      <FlatList
-        data={sortedItems}
-        keyExtractor={(item) => item.id}
-        scrollEnabled={false}
-        ListEmptyComponent={<Text style={styles.empty}>まだ商品がありません</Text>}
-        renderItem={({ item }) => {
+      {sortedItems.length === 0 ? (
+        <Text style={styles.empty}>まだ商品がありません</Text>
+      ) : (
+        sortedItems.map((item) => {
           const p = getRewardProgress(item, netSaved);
+          const packsRemaining = getPacksRemaining(p.remaining, settings.packPrice);
+
           return (
-            <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('RewardItemDetail', { item })}>
-              <Text style={styles.itemName}>{item.name}</Text>
+            <TouchableOpacity
+              key={item.id}
+              style={styles.item}
+              onPress={() => navigation.navigate('RewardItemDetail', { item })}
+            >
+              <RewardItemImage imageUrl={item.imageUrl} style={styles.itemImage} />
+              <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
               <Text style={styles.itemPrice}>{formatYen(item.price)}</Text>
-              <Text>{p.isAchieved ? '🎉 購入可能 この商品が買えるようになりました' : `あと ${formatYen(p.remaining)}`}</Text>
-              <Text>達成率 {p.progress}%</Text>
+              <Text style={styles.itemMeta}>
+                {p.isAchieved
+                  ? '🎉 購入可能 この商品が買えるようになりました'
+                  : `あと ${formatYen(p.remaining)}`}
+              </Text>
+              {!p.isAchieved && packsRemaining !== null && (
+                <Text style={styles.itemMeta}>約{packsRemaining}箱分で届く</Text>
+              )}
+              <Text style={styles.itemMeta}>達成率 {p.progress}%</Text>
             </TouchableOpacity>
           );
-        }}
-      />
+        })
+      )}
     </ScrollView>
   );
 }
@@ -206,8 +251,10 @@ const styles = StyleSheet.create({
   space: { height: 8 },
   input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 10, padding: 10, marginBottom: 8, backgroundColor: '#fff' },
   item: { backgroundColor: '#fff', borderRadius: 14, padding: 12, marginBottom: 8 },
+  itemImage: { height: 100 },
   itemName: { fontSize: 17, fontWeight: '700', color: '#111' },
   itemPrice: { fontSize: 22, fontWeight: '800', marginVertical: 4 },
+  itemMeta: { fontSize: 14, color: '#444', marginTop: 2 },
   empty: { color: '#666' },
   sortRow: { flexDirection: 'row', gap: 6, marginBottom: 10, flexWrap: 'wrap' },
   sortButton: {

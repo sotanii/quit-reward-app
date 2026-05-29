@@ -5,7 +5,7 @@ import { LabeledInput } from '../components/LabeledInput';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { saveSettings, setOnboarded } from '../storage/storage';
 import { RootStackParamList } from '../types/navigation';
-import { isValidDateString } from '../utils/validation';
+import { isNotFutureDate, isValidDateString } from '../utils/validation';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SmokingSettings'>;
 
@@ -24,6 +24,7 @@ export function SmokingSettingsScreen({ navigation }: Props) {
     if (Number.isNaN(parsedDaysPerPack) || parsedDaysPerPack <= 0) return Alert.alert('入力エラー', '1箱を吸い切る日数は0より大きい値を入力してください。');
     if (Number.isNaN(parsedMinutes) || parsedMinutes <= 0) return Alert.alert('入力エラー', '1本あたりの喫煙時間は0より大きい値を入力してください。');
     if (!isValidDateString(quitStartDate)) return Alert.alert('入力エラー', '禁煙開始日は YYYY-MM-DD 形式の正しい日付を入力してください。');
+    if (!isNotFutureDate(quitStartDate)) return Alert.alert('入力エラー', '禁煙開始日は今日以前の日付を入力してください。');
 
     await saveSettings({ packPrice: parsedPackPrice, daysPerPack: parsedDaysPerPack, minutesPerCigarette: parsedMinutes, quitStartDate: new Date(`${quitStartDate}T00:00:00.000Z`).toISOString() });
     await setOnboarded(true);

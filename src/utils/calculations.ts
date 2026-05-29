@@ -31,8 +31,14 @@ export function getSavedTimeMinutes(settings: SmokingSettings): number {
 }
 
 export function getSlipCost(settings: SmokingSettings, totalSlipCount: number): number {
+  if (settings.packPrice <= 0) return 0;
   const perCigarettePrice = settings.packPrice / CIGARETTES_PER_PACK;
   return perCigarettePrice * totalSlipCount;
+}
+
+export function getPacksRemaining(remainingPrice: number, packPrice: number): number | null {
+  if (packPrice <= 0 || remainingPrice <= 0) return null;
+  return Math.ceil(remainingPrice / packPrice);
 }
 
 export function getNetSavedAmount(settings: SmokingSettings, totalSlipCount: number): number {

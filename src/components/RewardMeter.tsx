@@ -13,9 +13,11 @@ type Props = {
 };
 
 export function RewardMeter({ item, netSaved, dailySaving }: Props) {
-  const progress = Math.min(100, Math.max(0, (netSaved / item.price) * 100));
+  const progress = item.price > 0
+    ? Math.min(100, Math.max(0, (netSaved / item.price) * 100))
+    : 100;
   const remaining = Math.max(0, item.price - netSaved);
-  const isAchieved = netSaved >= item.price;
+  const isAchieved = item.price > 0 && netSaved >= item.price;
 
   // あと何日で届くか（1日あたりの節約額がゼロ以下なら「---」表示）
   const daysLeft = dailySaving > 0 ? Math.ceil(remaining / dailySaving) : null;

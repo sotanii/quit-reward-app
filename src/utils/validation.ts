@@ -6,6 +6,15 @@ export function isValidDateString(dateText: string): boolean {
   return date.getUTCFullYear() === y && date.getUTCMonth() + 1 === m && date.getUTCDate() === d;
 }
 
+export function isNotFutureDate(dateText: string): boolean {
+  if (!isValidDateString(dateText)) return false;
+  const input = new Date(`${dateText}T00:00:00`);
+  const today = new Date();
+  input.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  return input.getTime() <= today.getTime();
+}
+
 export function isValidHttpUrl(url: string): boolean {
   return /^https?:\/\//.test(url.trim());
 }

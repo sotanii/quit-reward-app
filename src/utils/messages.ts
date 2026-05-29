@@ -1,4 +1,4 @@
-import { CIGARETTES_PER_PACK } from './calculations';
+import { CIGARETTES_PER_PACK, getPacksRemaining } from './calculations';
 import { RewardItem, SlipRecord, SmokingSettings } from '../types';
 
 /**
@@ -46,9 +46,9 @@ export function generateMotivationMessage(ctx: MessageContext): string {
       (a.price - netSaved) < (b.price - netSaved) ? a : b
     );
     const remaining = closest.price - netSaved;
-    const packsRemaining = Math.ceil(remaining / settings.packPrice);
+    const packsRemaining = getPacksRemaining(remaining, settings.packPrice);
 
-    if (packsRemaining > 0) {
+    if (packsRemaining !== null) {
       candidates.push(
         `あと約${packsRemaining}箱分で、次のごほうびに届きます 🎁`
       );
@@ -116,7 +116,7 @@ export function generateMotivationMessage(ctx: MessageContext): string {
 
   // ── フォールバック ──
   if (candidates.length === 0) {
-    candidates.push('今日も一歩ずつ、未来へ近づいています 🌿');
+    candidates.push('今日から少しずつ、欲しいものに近づいていきましょう 🌿');
   }
 
   // 日付ベースでランダム選択（同日中は同じメッセージを表示）
