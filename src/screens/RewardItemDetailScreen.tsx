@@ -37,6 +37,19 @@ export function RewardItemDetailScreen({ route, navigation }: Props) {
     ]);
   };
 
+  const handleOpenUrl = async () => {
+    try {
+      const supported = await Linking.canOpenURL(item.url);
+      if (supported) {
+        await Linking.openURL(item.url);
+      } else {
+        Alert.alert('エラー', 'このURLを開けませんでした。');
+      }
+    } catch {
+      Alert.alert('エラー', 'URLを開く際にエラーが発生しました。');
+    }
+  };
+
   const progress = getRewardProgress(item, saved);
   return (
     <View style={styles.container}>
@@ -48,7 +61,7 @@ export function RewardItemDetailScreen({ route, navigation }: Props) {
         <Text style={styles.row}>URL: {item.url}</Text>
         <Text style={styles.row}>メモ: {item.memo || '-'}</Text>
       </View>
-      <PrimaryButton title="Amazonで見る" onPress={() => Linking.openURL(item.url)} />
+      <PrimaryButton title="商品ページを見る" onPress={handleOpenUrl} />
       <View style={styles.space} />
       <PrimaryButton title="この商品を削除" onPress={onDelete} />
     </View>

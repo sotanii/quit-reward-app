@@ -3,5 +3,11 @@
   "compilerOptions": {
     "strict": true,
     "baseUrl": "."
-  }
+  },
+  "exclude": [
+    "components",
+    "hooks",
+    "constants",
+    "node_modules"
+  ]
 }

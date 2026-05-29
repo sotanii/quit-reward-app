@@ -12,10 +12,12 @@ export function getQuitDays(quitStartDate: string): number {
 }
 
 export function getDailyCigarettes(daysPerPack: number): number {
+  if (daysPerPack <= 0) return 0;
   return CIGARETTES_PER_PACK / daysPerPack;
 }
 
 export function getDailySmokingCost(settings: SmokingSettings): number {
+  if (settings.daysPerPack <= 0) return 0;
   return settings.packPrice / settings.daysPerPack;
 }
 
@@ -40,7 +42,9 @@ export function getNetSavedAmount(settings: SmokingSettings, totalSlipCount: num
 export function getRewardProgress(item: RewardItem, netSavedAmount: number) {
   const remaining = Math.max(0, item.price - netSavedAmount);
   const isAchieved = netSavedAmount >= item.price;
-  const progress = Math.min(100, Math.floor((netSavedAmount / item.price) * 100));
+  const progress = item.price > 0
+    ? Math.min(100, Math.floor((netSavedAmount / item.price) * 100))
+    : 100;
 
   return {
     remaining,

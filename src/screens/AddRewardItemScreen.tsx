@@ -1,6 +1,7 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text } from 'react-native';
+import { v4 as uuidv4 } from 'uuid';
 
 import { LabeledInput } from '../components/LabeledInput';
 import { PrimaryButton } from '../components/PrimaryButton';
@@ -9,9 +10,6 @@ import { RootStackParamList } from '../types/navigation';
 import { isValidHttpUrl } from '../utils/validation';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddRewardItem'>;
-
-const createId = () =>
-  `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 export function AddRewardItemScreen({ navigation }: Props) {
   const [name, setName] = useState('');
@@ -45,7 +43,7 @@ export function AddRewardItemScreen({ navigation }: Props) {
     const items = await getRewardItems();
 
     items.unshift({
-      id: createId(),
+      id: uuidv4(),
       name: name.trim(),
       price: parsedPrice,
       url: url.trim(),

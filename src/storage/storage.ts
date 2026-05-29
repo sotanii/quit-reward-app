@@ -8,12 +8,26 @@ const KEYS = {
   SLIP_RECORDS: 'slipRecords',
 };
 
-export const defaultSettings: SmokingSettings = {
-  packPrice: 600,
-  daysPerPack: 1,
-  minutesPerCigarette: 5,
-  quitStartDate: new Date().toISOString(),
-};
+export function createDefaultSettings(): SmokingSettings {
+  return {
+    packPrice: 600,
+    daysPerPack: 1,
+    minutesPerCigarette: 5,
+    quitStartDate: new Date().toISOString(),
+  };
+}
+
+/** @deprecated Use createDefaultSettings() instead for a fresh date */
+export const defaultSettings: SmokingSettings = createDefaultSettings();
+
+function safeParse<T>(json: string | null, fallback: T): T {
+  if (json === null) return fallback;
+  try {
+    return JSON.parse(json) as T;
+  } catch {
+    return fallback;
+  }
+}
 
 export async function setOnboarded(value: boolean): Promise<void> {
   await AsyncStorage.setItem(KEYS.ONBOARDED, JSON.stringify(value));
@@ -21,7 +35,7 @@ export async function setOnboarded(value: boolean): Promise<void> {
 
 export async function getOnboarded(): Promise<boolean> {
   const value = await AsyncStorage.getItem(KEYS.ONBOARDED);
-  return value ? JSON.parse(value) : false;
+  return safeParse(value, false);
 }
 
 export async function saveSettings(settings: SmokingSettings): Promise<void> {
@@ -30,7 +44,7 @@ export async function saveSettings(settings: SmokingSettings): Promise<void> {
 
 export async function getSettings(): Promise<SmokingSettings> {
   const value = await AsyncStorage.getItem(KEYS.SETTINGS);
-  return value ? JSON.parse(value) : defaultSettings;
+  return safeParse(value, createDefaultSettings());
 }
 
 export async function saveRewardItems(items: RewardItem[]): Promise<void> {
@@ -39,7 +53,7 @@ export async function saveRewardItems(items: RewardItem[]): Promise<void> {
 
 export async function getRewardItems(): Promise<RewardItem[]> {
   const value = await AsyncStorage.getItem(KEYS.REWARD_ITEMS);
-  return value ? JSON.parse(value) : [];
+  return safeParse(value, []);
 }
 
 export async function saveSlipRecords(records: SlipRecord[]): Promise<void> {
@@ -48,13 +62,14 @@ export async function saveSlipRecords(records: SlipRecord[]): Promise<void> {
 
 export async function getSlipRecords(): Promise<SlipRecord[]> {
   const value = await AsyncStorage.getItem(KEYS.SLIP_RECORDS);
-  return value ? JSON.parse(value) : [];
+  return safeParse(value, []);
 }
 
 export async function resetAllData(): Promise<void> {
+  const freshDefaults = createDefaultSettings();
   await AsyncStorage.multiSet([
     [KEYS.ONBOARDED, JSON.stringify(false)],
-    [KEYS.SETTINGS, JSON.stringify(defaultSettings)],
+    [KEYS.SETTINGS, JSON.stringify(freshDefaults)],
     [KEYS.REWARD_ITEMS, JSON.stringify([])],
     [KEYS.SLIP_RECORDS, JSON.stringify([])],
   ]);
