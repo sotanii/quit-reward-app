@@ -21,20 +21,27 @@ type MessageContext = {
 export function generateMotivationMessage(ctx: MessageContext): string {
   const candidates: string[] = [];
   const { settings, netSaved, dailySaving, quitDays, slips, items } = ctx;
+  const hasAccumulated = quitDays >= 1;
 
-  // ── 週間の節約額メッセージ ──
+  // ── 0日目（開始当日）のウェルカム ──
+  if (quitDays === 0) {
+    candidates.push('今日から少しずつ、欲しいものに近づいていきましょう 🌿');
+  }
+
+  // ── 週間の節約額メッセージ（1日以上経過後） ──
   const weeklySaving = dailySaving * 7;
-  if (weeklySaving > 0) {
+  if (hasAccumulated && weeklySaving > 0) {
     candidates.push(
       `今週は約¥${Math.round(weeklySaving).toLocaleString('ja-JP')}分を未来に回せます ✨`
     );
   }
 
-  // ── 3日間の節約額メッセージ ──
-  const threeDaySaving = dailySaving * 3;
-  if (threeDaySaving > 0) {
+  // ── 3日間の節約額メッセージ（1日以上経過後） ──
+  if (hasAccumulated && dailySaving > 0) {
+    const elapsedDays = Math.min(quitDays, 3);
+    const recentSaving = dailySaving * elapsedDays;
     candidates.push(
-      `この3日で約¥${Math.round(threeDaySaving).toLocaleString('ja-JP')}分、欲しいものに近づいています 🌱`
+      `この${elapsedDays}日で約¥${Math.round(recentSaving).toLocaleString('ja-JP')}分、欲しいものに近づいています 🌱`
     );
   }
 
@@ -105,10 +112,10 @@ export function generateMotivationMessage(ctx: MessageContext): string {
     );
   }
 
-  // ── 1本あたりの喫煙時間ベースの時間節約メッセージ ──
+  // ── 1本あたりの喫煙時間ベースの時間節約メッセージ（1日以上経過後） ──
   const dailyCigs = CIGARETTES_PER_PACK / (settings.daysPerPack > 0 ? settings.daysPerPack : 1);
   const dailyTimeSaved = settings.minutesPerCigarette * dailyCigs;
-  if (dailyTimeSaved >= 30) {
+  if (hasAccumulated && dailyTimeSaved >= 30) {
     candidates.push(
       `毎日約${Math.round(dailyTimeSaved)}分、自分の時間が増えています ⏰`
     );
