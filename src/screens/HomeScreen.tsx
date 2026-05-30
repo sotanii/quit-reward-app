@@ -12,7 +12,15 @@ import { getRewardItems, getSettings, getSlipRecords, saveSlipRecords } from '..
 import { RewardItem, SlipRecord, SmokingSettings } from '../types';
 import { RootStackParamList } from '../types/navigation';
 import {
+  formatCigaretteCount,
+  formatDurationMinutes,
+  formatPacks,
+  formatQuitDays,
   formatYen,
+  formatYenContext,
+  formatYenStat,
+} from '../utils/formatDisplay';
+import {
   getDailySmokingCost,
   getNetSavedAmount,
   getOriginalSavedAmount,
@@ -171,12 +179,20 @@ export function HomeScreen({ navigation }: Props) {
       <Text style={styles.title}>ホーム</Text>
 
       <MotivationCard message={motivationMessage} />
-      <StatCard label="禁煙日数" value={`${quitDays}日`} />
-      <StatCard label="実質節約額" value={formatYen(netSaved)} />
-      <StatCard label="本来の節約額" value={formatYen(originalSaved)} />
-      <StatCard label="節約時間" value={`${Math.round(savedTime)}分`} />
+      <StatCard
+        label="禁煙日数"
+        value={formatQuitDays(quitDays)}
+        hint={quitDays >= 365 ? `${quitDays}日` : undefined}
+      />
+      <StatCard label="実質節約額" value={formatYenStat(netSaved)} />
+      <StatCard label="本来の節約額" value={formatYenStat(originalSaved)} />
+      <StatCard
+        label="節約時間"
+        value={formatDurationMinutes(savedTime)}
+        hint={savedTime >= 120 ? `(${Math.round(savedTime)}分)` : undefined}
+      />
       <StatCard label="1日あたりの節約額" value={formatYen(daily)} />
-      <StatCard label="吸っちゃった累計本数" value={`${totalSlipCount}本`} />
+      <StatCard label="吸っちゃった累計本数" value={formatCigaretteCount(totalSlipCount)} />
 
       {closestItem && (
         <>
@@ -241,10 +257,10 @@ export function HomeScreen({ navigation }: Props) {
               <Text style={styles.itemMeta}>
                 {p.isAchieved
                   ? '🎉 購入可能 この商品が買えるようになりました'
-                  : `あと ${formatYen(p.remaining)}`}
+                  : `あと ${formatYenContext(p.remaining, true)}`}
               </Text>
               {!p.isAchieved && packsRemaining !== null && (
-                <Text style={styles.itemMeta}>約{packsRemaining}箱分で届く</Text>
+                <Text style={styles.itemMeta}>{formatPacks(packsRemaining)}で届く</Text>
               )}
               <Text style={styles.itemMeta}>達成率 {p.progress}%</Text>
             </TouchableOpacity>

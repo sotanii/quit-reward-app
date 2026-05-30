@@ -5,7 +5,8 @@ import { PrimaryButton } from '../components/PrimaryButton';
 import { RewardItemImage } from '../components/RewardItemImage';
 import { getRewardItems, getSettings, getSlipRecords, saveRewardItems } from '../storage/storage';
 import { RootStackParamList } from '../types/navigation';
-import { formatYen, getNetSavedAmount, getPacksRemaining, getRewardProgress } from '../utils/calculations';
+import { formatPacks, formatYen, formatYenContext } from '../utils/formatDisplay';
+import { getNetSavedAmount, getPacksRemaining, getRewardProgress } from '../utils/calculations';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RewardItemDetail'>;
 
@@ -64,10 +65,10 @@ export function RewardItemDetailScreen({ route, navigation }: Props) {
         <Text style={styles.price}>{formatYen(item.price)}</Text>
         <Text style={styles.row}>達成率: {progress.progress}%</Text>
         <Text style={styles.row}>
-          {progress.isAchieved ? '🎉 購入可能です' : `あと ${formatYen(progress.remaining)}`}
+          {progress.isAchieved ? '🎉 購入可能です' : `あと ${formatYenContext(progress.remaining, true)}`}
         </Text>
         {!progress.isAchieved && packsRemaining !== null && (
-          <Text style={styles.row}>約{packsRemaining}箱分で届く</Text>
+          <Text style={styles.row}>{formatPacks(packsRemaining)}で届く</Text>
         )}
         <Text style={styles.row} numberOfLines={3}>URL: {item.url}</Text>
         <Text style={styles.row}>メモ: {item.memo || '-'}</Text>

@@ -1,7 +1,12 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { RewardItem } from '../types';
-import { formatYen } from '../utils/calculations';
+import {
+  formatDaysUntil,
+  formatYen,
+  formatYenContext,
+  formatYenStat,
+} from '../utils/formatDisplay';
 
 type Props = {
   /** 対象商品 */
@@ -19,12 +24,11 @@ export function RewardMeter({ item, netSaved, dailySaving }: Props) {
   const remaining = Math.max(0, item.price - netSaved);
   const isAchieved = item.price > 0 && netSaved >= item.price;
 
-  // あと何日で届くか（1日あたりの節約額がゼロ以下なら「---」表示）
   const daysLeft = dailySaving > 0 ? Math.ceil(remaining / dailySaving) : null;
+  const daysLeftLabel = daysLeft !== null ? formatDaysUntil(daysLeft) : null;
 
   return (
     <View style={styles.container}>
-      {/* ヘッダー: 商品名 + 進捗率 */}
       <View style={styles.header}>
         <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
         <Text style={styles.progressText}>
@@ -32,32 +36,26 @@ export function RewardMeter({ item, netSaved, dailySaving }: Props) {
         </Text>
       </View>
 
-      {/* 金額表示 */}
       <View style={styles.amountRow}>
-        <Text style={styles.savedAmount}>{formatYen(netSaved)}</Text>
+        <Text style={styles.savedAmount}>{formatYenStat(netSaved)}</Text>
         <Text style={styles.separator}> / </Text>
         <Text style={styles.targetAmount}>{formatYen(item.price)}</Text>
       </View>
 
-      {/* メーター本体: タバコを抽象化した横長バー */}
       <View style={styles.meterWrap}>
-        {/* 左端: フィルター部分（あと何日） */}
         <View style={styles.filterSection}>
           <Text style={styles.filterText}>
-            {isAchieved ? '✨' : daysLeft !== null ? `あと\n${daysLeft}日` : '---'}
+            {isAchieved ? '✨' : daysLeftLabel !== null ? `あと\n${daysLeftLabel}` : '---'}
           </Text>
         </View>
 
-        {/* 右側: メーター本体 */}
         <View style={styles.meterBody}>
-          {/* 進捗バー */}
           <View style={[styles.meterFill, { width: `${progress}%` }]}>
             {progress > 15 && (
-              <Text style={styles.meterFillText}>{formatYen(netSaved)}</Text>
+              <Text style={styles.meterFillText}>{formatYenStat(netSaved)}</Text>
             )}
           </View>
 
-          {/* 達成時のオーバーレイ */}
           {isAchieved && (
             <View style={styles.achievedOverlay}>
               <Text style={styles.achievedText}>🎉 購入可能になりました！</Text>
@@ -66,10 +64,10 @@ export function RewardMeter({ item, netSaved, dailySaving }: Props) {
         </View>
       </View>
 
-      {/* フッター: 残り金額 */}
       {!isAchieved && (
         <Text style={styles.remainingText}>
-          あと {formatYen(remaining)}{daysLeft !== null ? `（約${daysLeft}日）` : ''}
+          あと {formatYenContext(remaining, true)}
+          {daysLeftLabel !== null ? `（${daysLeftLabel}）` : ''}
         </Text>
       )}
     </View>
@@ -89,7 +87,6 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
-  // ヘッダー
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -109,7 +106,6 @@ const styles = StyleSheet.create({
     color: '#38B98A',
   },
 
-  // 金額行
   amountRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
@@ -131,7 +127,6 @@ const styles = StyleSheet.create({
     color: '#888',
   },
 
-  // メーター本体
   meterWrap: {
     flexDirection: 'row',
     height: 48,
@@ -139,9 +134,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  // 左端フィルター部分
   filterSection: {
-    width: 56,
+    width: 64,
     backgroundColor: '#E0E8E4',
     justifyContent: 'center',
     alignItems: 'center',
@@ -156,7 +150,6 @@ const styles = StyleSheet.create({
     lineHeight: 14,
   },
 
-  // メーター右側本体
   meterBody: {
     flex: 1,
     backgroundColor: '#ECEFED',
@@ -166,7 +159,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  // 進捗バー（ミント/グリーン）
   meterFill: {
     height: '100%',
     backgroundColor: '#38B98A',
@@ -183,7 +175,6 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
 
-  // 達成オーバーレイ
   achievedOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(56, 185, 138, 0.15)',
@@ -196,7 +187,6 @@ const styles = StyleSheet.create({
     color: '#2A8A65',
   },
 
-  // フッター
   remainingText: {
     fontSize: 13,
     color: '#777',

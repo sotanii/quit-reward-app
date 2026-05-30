@@ -1,4 +1,10 @@
 import { CIGARETTES_PER_PACK, getPacksRemaining } from './calculations';
+import {
+  formatDaysUntilPhrase,
+  formatDurationMinutes,
+  formatPacks,
+  formatYenStat,
+} from './formatDisplay';
 import { RewardItem, SlipRecord, SmokingSettings } from '../types';
 
 /**
@@ -32,7 +38,7 @@ export function generateMotivationMessage(ctx: MessageContext): string {
   const weeklySaving = dailySaving * 7;
   if (hasAccumulated && weeklySaving > 0) {
     candidates.push(
-      `今週は約¥${Math.round(weeklySaving).toLocaleString('ja-JP')}分を未来に回せます ✨`
+      `今週は${formatYenStat(weeklySaving)}分を未来に回せます ✨`
     );
   }
 
@@ -41,7 +47,7 @@ export function generateMotivationMessage(ctx: MessageContext): string {
     const elapsedDays = Math.min(quitDays, 3);
     const recentSaving = dailySaving * elapsedDays;
     candidates.push(
-      `この${elapsedDays}日で約¥${Math.round(recentSaving).toLocaleString('ja-JP')}分、欲しいものに近づいています 🌱`
+      `この${elapsedDays}日で${formatYenStat(recentSaving)}分、欲しいものに近づいています 🌱`
     );
   }
 
@@ -57,14 +63,14 @@ export function generateMotivationMessage(ctx: MessageContext): string {
 
     if (packsRemaining !== null) {
       candidates.push(
-        `あと約${packsRemaining}箱分で、次のごほうびに届きます 🎁`
+        `あと${formatPacks(packsRemaining)}で、次のごほうびに届きます 🎁`
       );
     }
 
     if (dailySaving > 0) {
       const daysLeft = Math.ceil(remaining / dailySaving);
       candidates.push(
-        `あと約${daysLeft}日で「${closest.name}」に届きそうです ✨`
+        `あと${formatDaysUntilPhrase(daysLeft)}で「${closest.name}」に届きそうです ✨`
       );
     }
   }
@@ -89,7 +95,7 @@ export function generateMotivationMessage(ctx: MessageContext): string {
   // ── 禁煙日数に応じたメッセージ ──
   if (quitDays >= 30) {
     candidates.push(
-      `${quitDays}日間も続けてる。すごいペースです！ 🚀`
+      `${formatQuitDaysForMessage(quitDays)}も続けてる。すごいペースです！ 🚀`
     );
   } else if (quitDays >= 7) {
     candidates.push(
@@ -104,11 +110,11 @@ export function generateMotivationMessage(ctx: MessageContext): string {
   // ── 節約額に応じたメッセージ ──
   if (netSaved >= 10000) {
     candidates.push(
-      `もう¥${Math.round(netSaved).toLocaleString('ja-JP')}も積み上がりました。すごい！ 🎉`
+      `もう${formatYenStat(netSaved)}も積み上がりました。すごい！ 🎉`
     );
   } else if (netSaved >= 1000) {
     candidates.push(
-      `¥${Math.round(netSaved).toLocaleString('ja-JP')}分の未来が見えてきました 🌈`
+      `${formatYenStat(netSaved)}分の未来が見えてきました 🌈`
     );
   }
 
@@ -117,7 +123,7 @@ export function generateMotivationMessage(ctx: MessageContext): string {
   const dailyTimeSaved = settings.minutesPerCigarette * dailyCigs;
   if (hasAccumulated && dailyTimeSaved >= 30) {
     candidates.push(
-      `毎日約${Math.round(dailyTimeSaved)}分、自分の時間が増えています ⏰`
+      `毎日${formatDurationMinutes(dailyTimeSaved)}、自分の時間が増えています ⏰`
     );
   }
 
@@ -131,4 +137,10 @@ export function generateMotivationMessage(ctx: MessageContext): string {
   const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
   const index = seed % candidates.length;
   return candidates[index];
+}
+
+function formatQuitDaysForMessage(days: number): string {
+  if (days < 365) return `${days}日間`;
+  const years = Math.round((days / 365) * 10) / 10;
+  return Number.isInteger(years) ? `約${years}年間` : `約${years.toFixed(1)}年間`;
 }
